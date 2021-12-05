@@ -1,11 +1,6 @@
-import java.awt.BorderLayout;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
@@ -32,37 +27,40 @@ public class MainFrame extends JFrame {
     public MainFrame() {
 
         super("Построение графиков функций на основе заранее подготовленных файлов");
+        File init_ = new File("init");
+        openGraphics(init_);
         setSize(WIDTH, HEIGHT);
+        Dimension ss = new Dimension();
+        ss.height = 60;
+        ss.width = 40;
         Toolkit kit = Toolkit.getDefaultToolkit();
         setLocation((kit.getScreenSize().width - WIDTH)/2,
                 (kit.getScreenSize().height - HEIGHT)/2);
         setExtendedState(MAXIMIZED_BOTH);
-
+        fileChooser = new JFileChooser();
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
-
         JMenu fileMenu = new JMenu("Файл");
         menuBar.add(fileMenu);
-
         Action openGraphicsAction = new AbstractAction("Открыть файл с графиком") {
             public void actionPerformed(ActionEvent event) {
-                if (fileChooser==null) {
-                    fileChooser = new JFileChooser();
-                    fileChooser.setCurrentDirectory(new File("."));
-                }
+                fileChooser.setCurrentDirectory(new File("~"));
                 if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION)
                     openGraphics(fileChooser.getSelectedFile());
             }
-
         };
-
-
-
         fileMenu.add(openGraphicsAction);
-
         JMenu graphicsMenu = new JMenu("График");
         menuBar.add(graphicsMenu);
 
+        Action saveGraphicsAction = new AbstractAction("Сохранить файл с графиком") {
+            public void actionPerformed(ActionEvent event) {
+                fileChooser.setCurrentDirectory(new File("~"));
+                if (fileChooser.showSaveDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION)
+                    saveGraphics(fileChooser.getSelectedFile());
+            }
+        };
+        fileMenu.add(saveGraphicsAction);
 
         Action showAxisAction = new AbstractAction("Показывать оси координат") {
             public void actionPerformed(ActionEvent event) {
@@ -99,7 +97,21 @@ public class MainFrame extends JFrame {
         getContentPane().add(display, BorderLayout.CENTER);
 
     }
-    
+
+    protected void saveGraphics(File selectedFile) {
+        File file = fileChooser.getSelectedFile();
+        try {
+            DataOutputStream out = new DataOutputStream(new FileOutputStream(file));
+            for (int i = 0; i < display.getDataLenght(); i++) {
+                out.writeDouble(display.getValue(i, 0));
+                out.writeDouble(display.getValue(i, 1));
+            }
+            out.close();
+        } catch (Exception e) {
+            System.out.println("Не удалость создать файл");
+        }
+    }
+
     protected void openGraphics(File selectedFile) {
         try {
             DataInputStream in = new DataInputStream(new FileInputStream(selectedFile));

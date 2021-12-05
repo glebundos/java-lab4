@@ -23,32 +23,35 @@ import javax.swing.*;
 
 public class GraphicsDisplay extends JPanel {
 
-    
+    class GraphPoint {
+        double xd;
+        double yd;
+        int x;
+        int y;
+        int n;
+    }
+
     private Double[][] graphicsData;
 
-    
     private boolean showAxis = true;
     private boolean showMarkers = true;
-
-    
+    private boolean transform = false;
+    private boolean showGrid = true;
     private double minX;
     private double maxX;
     private double minY;
     private double maxY;
-
-    
-
     private double scale;
-    
 
+    private DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance();
     private BasicStroke graphicsStroke;
     private BasicStroke axisStroke;
     private boolean turnGraph = false;
     private BasicStroke markerStroke;
-    
-
     private Font axisFont;
+    private Font captionFont;
     private Font smallfont;
+    private GraphPoint SMP;
     public GraphicsDisplay() {
 
 
@@ -84,6 +87,24 @@ public class GraphicsDisplay extends JPanel {
         this.showAxis = showAxis;
         repaint();
 
+    }
+
+    public void setTransform(boolean transform) {
+        this.transform = transform;
+        repaint();
+    }
+
+    public void setShowGrid(boolean showGrid) {
+        this.showGrid = showGrid;
+        repaint();
+    }
+
+    public int getDataLenght() {
+        return graphicsData.length;
+    }
+
+    public double getValue(int i, int j) {
+        return graphicsData[i][j];
     }
     public void setShowMarkers(boolean showMarkers) {
         this.showMarkers = showMarkers;
@@ -175,23 +196,46 @@ public class GraphicsDisplay extends JPanel {
         canvas.setStroke(oldStroke);
     }
 
+    protected void paintHint(Graphics2D canvas) {
+        Color oldColor = canvas.getColor();
+        canvas.setColor(Color.MAGENTA);
+        StringBuffer label = new StringBuffer();
+        label.append("X=");
+        label.append(formatter.format((SMP.xd)));
+        label.append(", Y=");
+        label.append(formatter.format((SMP.yd)));
+        FontRenderContext context = canvas.getFontRenderContext();
+        Rectangle2D bounds = captionFont.getStringBounds(label.toString(), context);
+        if (!transform) {
+            int dy = -10;
+            int dx = +7;
+            if (SMP.y < bounds.getHeight())
+                dy = +13;
+            if (getWidth() < bounds.getWidth() + SMP.x + 20)
+                dx = -(int) bounds.getWidth() - 15;
+            canvas.drawString(label.toString(), SMP.x + dx, SMP.y + dy);
+        } else {
+            int dy = 10;
+            int dx = -7;
+            if (SMP.x < 10)
+                dx = +13;
+            if (SMP.y < bounds.getWidth() + 20)
+                dy = -(int) bounds.getWidth() - 15;
+            canvas.drawString(label.toString(), getHeight() - SMP.y + dy, SMP.x + dx);
+        }
+        canvas.setColor(oldColor);
+    }
 
     
     protected void paintGraphics(Graphics2D canvas) {
-
         canvas.setStroke(graphicsStroke);
-
         canvas.setColor(Color.magenta);
-
         GeneralPath graphics = new GeneralPath();
         for (int i = 0; i < graphicsData.length; i++) {
-
             Point2D.Double point = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
             if (i > 0) {
-
                 graphics.lineTo(point.getX(), point.getY());
             } else {
-
                 graphics.moveTo(point.getX(), point.getY());
             }
         }
